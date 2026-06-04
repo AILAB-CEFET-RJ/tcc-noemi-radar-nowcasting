@@ -1,0 +1,14 @@
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+scipy
+pillow
+pyproj
+pyarrow
+joblib
+tqdm
+pytz
+jupyter
+ipykernel

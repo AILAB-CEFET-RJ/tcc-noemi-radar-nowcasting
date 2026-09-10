@@ -1,15 +1,12 @@
 from pathlib import Path
 import argparse
+import sys
 import numpy as np
 
-from radar_station_memmap_dataset import RadarStationMemmapDataset
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-
-def parse_years(years_arg):
-    if "-" in years_arg:
-        start, end = years_arg.split("-")
-        return list(range(int(start), int(end) + 1))
-    return [int(y.strip()) for y in years_arg.split(",")]
+from nowcasting.dataset import RadarStationMemmapDataset, parse_years
 
 
 def main():
@@ -19,7 +16,10 @@ def main():
     parser.add_argument("--t-in", type=int, default=5)
     parser.add_argument("--t-out", type=int, default=5)
     parser.add_argument("--stride", type=int, default=5)
-    parser.add_argument("--split", type=str, default="test")
+    parser.add_argument("--split-name", type=str, default="test")
+    parser.add_argument(
+        "--target-source", choices=("alertario", "websirene"), default="websirene"
+    )
     args = parser.parse_args()
 
     years = parse_years(args.years)
@@ -30,7 +30,8 @@ def main():
         t_in=args.t_in,
         t_out=args.t_out,
         stride=args.stride,
-        split=args.split,
+        target_source=args.target_source,
+        split_name=args.split_name,
     )
 
     se_total = 0.0
@@ -57,8 +58,8 @@ def main():
 
     for idx, (year, start_idx) in enumerate(dataset.samples):
         data = dataset.year_data[year]
-        Y_all = data["Y_all"]
-        M_all = data["M_all"]
+        Y_all = data["targets"]
+        M_all = data["masks"]
 
         current_idx = start_idx + args.t_in - 1
         y_start = start_idx + args.t_in

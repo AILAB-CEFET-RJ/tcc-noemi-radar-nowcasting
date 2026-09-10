@@ -12,21 +12,18 @@
 
 Este repositório reúne os scripts usados nos experimentos do TCC para treinar e avaliar a arquitetura STConvS2S-C com imagens do Radar do Sumaré e medições WebSirene.
 
-Para reproduzir o treinamento principal, é necessário ter o dataset anual em formato `memmap` no caminho esperado e executar:
+Para reproduzir o treinamento principal, use o runner deste repositório. A
+arquitetura STConvS2S é uma dependência externa fixada como submódulo; o
+dataset, os splits temporais e as métricas de precipitação pertencem a este
+projeto.
 
 ```bash
-nohup python -u main.py \
-  -m stconvs2s-c \
-  -dsp /atmoseer/data/datasets/radar_sumare_2012_2024_15min_256_por_ano \
-  --years 2012-2024 \
-  -b 8 \
-  -e 10 \
-  -i 1 \
-  -w 0 \
-  -s 5 \
-  -c 0 \
-  --verbose \
-  > resultado_stconvs2s_2012_2024.log 2>&1 &
+python scripts/train_nowcasting.py \
+  --dataset-root data/datasets/radar_sumare_2012_2024_15min_128_por_ano \
+  --train-years 2012-2021 \
+  --val-years 2022 \
+  --test-years 2023-2024 \
+  --target-source alertario
 ```
 
 # Descrição Geral
@@ -39,7 +36,7 @@ Algumas etapas de ingestão e pré-processamento dependem de funcionalidades des
 
 [atmoseer](https://github.com/AILAB-CEFET-RJ/atmoseer)
 
-[stconvs2s](https://github.com/AILAB-CEFET-RJ/stconvs2s)
+[stconvs2s](https://github.com/AILAB-CEFET-RJ/stconvs2s), usado como dependência da arquitetura.
 
 # Funcionalidades
 
@@ -118,11 +115,10 @@ Caminho esperado do dataset:
 
 ## 2. Instalar o ambiente
 
-As dependências principais estão no repositório stconvs2s.
+Inicialize a dependência da arquitetura após clonar este repositório:
 
 ```bash
-git clone -b noemi https://github.com/noemicho/stconvs2s.git
-cd stconvs2s
+git submodule update --init --recursive
 ```
 
 Com Conda:
@@ -141,18 +137,20 @@ python -m pip install torch torchvision matplotlib ipykernel h5py pandas xarray 
 ## 3. Rodar o treinamento
 
 ```bash
-nohup python -u main.py \
-  -m stconvs2s-c \
-  -dsp /atmoseer/data/datasets/radar_sumare_2012_2024_15min_256_por_ano \
-  --years 2012-2024 \
-  -b 8 \
-  -e 10 \
-  -i 1 \
-  -w 0 \
-  -s 5 \
-  -c 0 \
-  --verbose \
-  > resultado_stconvs2s_2012_2024.log 2>&1 &
+nohup python -u scripts/train_nowcasting.py \
+  --dataset-root data/datasets/radar_sumare_2012_2024_15min_128_por_ano \
+  --train-years 2012-2021 \
+  --val-years 2022 \
+  --test-years 2023-2024 \
+  --target-source alertario \
+  --model stconvs2s-c \
+  --batch-size 2 \
+  --epochs 30 \
+  --patience 10 \
+  --loss weighted-huber \
+  --balanced-sampler \
+  --cuda 0 \
+  > resultado_multianual_alertario.log 2>&1 &
 ```
 
 ## 4. Acompanhar o treinamento

@@ -359,7 +359,37 @@ targets_metadata.json
 
 A geração dos arquivos do Alerta Rio não deve sobrescrever os arquivos da WebSirene.
 
-## 11. Resumo do fluxo
+## 11. Redução espacial de um dataset existente
+
+Quando os memmaps em `256 x 256` já existem, é possível produzir uma versão
+menor sem reprocessar os PNGs brutos do radar. O script
+`scripts/downsample_memmap_dataset.py` lê o dataset de origem em blocos,
+preservando o uso de memória limitado.
+
+O exemplo abaixo cria `128 x 128` para 2024. O diretório de saída deve ser
+novo: o script se recusa a sobrescrever arquivos existentes.
+
+```bash
+python scripts/downsample_memmap_dataset.py \
+  --source-root /home/ebezerra/ailab/stconvs2s/data/datasets/radar_sumare_2012_2024_15min_256_por_ano \
+  --output-root /home/ebezerra/ailab/stconvs2s/data/datasets/radar_sumare_2012_2024_15min_128_por_ano \
+  --year-start 2024 \
+  --year-end 2024 \
+  --height 128 \
+  --width 128 \
+  --target-source alertario \
+  --chunk-size 64
+```
+
+Os frames RGB são reduzidos por vizinho mais próximo. Os pixels observados nos
+targets e máscaras são remapeados para a nova grade; se duas estações caírem
+no mesmo pixel, é mantido o maior valor de precipitação. Os timestamps e a
+resolução temporal permanecem inalterados.
+
+Para processar simultaneamente os targets WebSirene e AlertaRio, use
+`--target-source both`, que é o valor padrão.
+
+## 12. Resumo do fluxo
 
 ```text
 Arquivos ZIP do Alerta Rio
